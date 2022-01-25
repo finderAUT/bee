@@ -9,15 +9,18 @@ use crate::{
 use crate::plugins::dashboard::config::DashboardConfig;
 
 use bee_autopeering::config::AutopeeringConfig;
-use bee_common::logger::LoggerConfig;
 use bee_gossip::NetworkConfig;
 use bee_ledger::workers::{pruning::config::PruningConfig, snapshot::config::SnapshotConfig};
 use bee_protocol::workers::config::ProtocolConfig;
 use bee_rest_api::endpoints::config::RestApiConfig;
 use bee_tangle::config::TangleConfig;
 
+use fern_logger::LoggerConfig;
+
 /// The config of a Bee full node.
 pub struct FullNodeConfig<S: NodeStorageBackend> {
+    /// The node alias.
+    pub alias: String,
     /// The local entity.
     pub local: Local,
     /// The specification of the network the node wants to participate in.
@@ -48,6 +51,11 @@ pub struct FullNodeConfig<S: NodeStorageBackend> {
 }
 
 impl<S: NodeStorageBackend> FullNodeConfig<S> {
+    /// Returns the alias of the node.
+    pub fn alias(&self) -> &String {
+        &self.alias
+    }
+
     /// Returns the local entity associated with the node.
     pub fn local(&self) -> &Local {
         &self.local
@@ -57,11 +65,32 @@ impl<S: NodeStorageBackend> FullNodeConfig<S> {
     pub fn network_spec(&self) -> &NetworkSpec {
         &self.network_spec
     }
+
+    pub fn from(local: Local, node_cfg: NodeConfig<S>) -> Self {
+        Self {
+            alias: node_cfg.alias,
+            local,
+            network_spec: node_cfg.network_spec,
+            logger_config: node_cfg.logger_config,
+            gossip_config: node_cfg.gossip_config,
+            autopeering_config: node_cfg.autopeering_config,
+            protocol_config: node_cfg.protocol_config,
+            rest_api_config: node_cfg.rest_api_config,
+            snapshot_config: node_cfg.snapshot_config,
+            pruning_config: node_cfg.pruning_config,
+            storage_config: node_cfg.storage_config,
+            tangle_config: node_cfg.tangle_config,
+            mqtt_config: node_cfg.mqtt_config,
+            #[cfg(feature = "dashboard")]
+            dashboard_config: node_cfg.dashboard_config,
+        }
+    }
 }
 
 impl<S: NodeStorageBackend> Clone for FullNodeConfig<S> {
     fn clone(&self) -> Self {
         Self {
+            alias: self.alias.clone(),
             local: self.local.clone(),
             network_spec: self.network_spec.clone(),
             logger_config: self.logger_config.clone(),
@@ -76,27 +105,6 @@ impl<S: NodeStorageBackend> Clone for FullNodeConfig<S> {
             mqtt_config: self.mqtt_config.clone(),
             #[cfg(feature = "dashboard")]
             dashboard_config: self.dashboard_config.clone(),
-        }
-    }
-}
-
-impl<S: NodeStorageBackend> From<NodeConfig<S>> for FullNodeConfig<S> {
-    fn from(node_cfg: NodeConfig<S>) -> Self {
-        Self {
-            local: node_cfg.local,
-            network_spec: node_cfg.network_spec,
-            logger_config: node_cfg.logger_config,
-            gossip_config: node_cfg.gossip_config,
-            autopeering_config: node_cfg.autopeering_config,
-            protocol_config: node_cfg.protocol_config,
-            rest_api_config: node_cfg.rest_api_config,
-            snapshot_config: node_cfg.snapshot_config,
-            pruning_config: node_cfg.pruning_config,
-            storage_config: node_cfg.storage_config,
-            tangle_config: node_cfg.tangle_config,
-            mqtt_config: node_cfg.mqtt_config,
-            #[cfg(feature = "dashboard")]
-            dashboard_config: node_cfg.dashboard_config,
         }
     }
 }

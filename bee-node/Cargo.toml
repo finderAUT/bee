@@ -1,6 +1,6 @@
 [package]
 name = "bee-node"
-version = "0.3.0-rc2"
+version = "0.3.0-rc3"
 authors = [ "IOTA Stiftung" ]
 edition = "2021"
 description = "Default node implementations."
@@ -12,7 +12,7 @@ homepage = "https://www.iota.org"
 
 [dependencies]
 bee-autopeering = { git = "https://github.com/iotaledger/bee.git", branch = "dev" }
-bee-common = { git = "https://github.com/iotaledger/bee.git", branch = "dev", default-features = false, features = [ "auth" ] }
+bee-common = { git = "https://github.com/iotaledger/bee.git", branch = "dev", default-features = false }
 bee-gossip = { git = "https://github.com/iotaledger/bee.git", branch = "dev", default-features = false, features = [ "full" ] }
 bee-ledger = { git = "https://github.com/iotaledger/bee.git", branch = "dev", default-features = false, features = [ "workers" ] }
 bee-message = { git = "https://github.com/iotaledger/bee.git", branch = "dev", default-features = false }
@@ -27,8 +27,11 @@ bee-tangle = { git = "https://github.com/iotaledger/bee.git", branch = "dev", de
 
 anymap = { version = "0.12.1", default-features = false }
 async-trait = { version = "0.1.51", default-features = false }
+auth-helper = { version = "0.1.0", default-features = false }
 cap = { version = "0.1.0", default-features = false, optional = true }
 chrono = { version = "0.4.19", default-features = false }
+ed25519 = { version = "1.3.0", default-features = false, features = [ "alloc", "pkcs8" ] }
+fern-logger = { version = "0.1.0", default-features = false }
 futures = { version = "0.3.17", default-features = false }
 fxhash = { version = "0.2.1", default-features = false }
 hex = { version = "0.4.3", default-features = false }
@@ -36,7 +39,8 @@ iota-crypto = { version = "0.9.1", default-features = false, features = [ "ed255
 log = { version = "0.4.14", default-features = false }
 mime_guess = { version = "2.0.3", default-features = false, optional = true }
 multiaddr = { version = "0.13.0", default-features = false }
-paho-mqtt = { version = "0.9.1", default-features = false, features = [ "bundled" ]}
+paho-mqtt = { version = "0.9.1", default-features = false, features = [ "bundled" ] }
+pkcs8 = { version = "0.8.0", default-features = false, features = [ "alloc", "pem", "std" ] }
 rand = { version = "0.8.4", default-features = false }
 rpassword = { version = "5.0.1", default-features = false }
 rust-embed = { version = "6.2.0", default-features = false, features = [ "interpolate-folder-path" ], optional = true }
