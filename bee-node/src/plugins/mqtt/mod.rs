@@ -20,6 +20,7 @@ use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
 use std::{any::Any, convert::Infallible};
+use bee_ledger::workers::event::MilestoneConfirmed;
 
 #[derive(Default)]
 pub struct Mqtt;
@@ -72,6 +73,9 @@ impl<N: Node> Worker<N> for Mqtt {
                 });
                 topic_handler(node, TOPIC_MILESTONES_SOLID, |_event: &SolidMilestoneChanged| {
                     (TOPIC_MILESTONES_SOLID, "")
+                });
+                topic_handler(node, TOPIC_MILESTONES_CONFIRMED, |_event: &MilestoneConfirmed| {
+                    (TOPIC_MILESTONES_CONFIRMED, "")
                 });
                 // topic_handler(node, _TOPIC_MESSAGES, |_event: &_| (_TOPIC_MESSAGES, ""));
                 // topic_handler(node, _TOPIC_MESSAGES_REFERENCED, |_event: &_| {
