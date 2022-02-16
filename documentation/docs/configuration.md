@@ -188,6 +188,7 @@ public_routes         = [
     "/api/v1/messages/:messageId/raw",
     "/api/v1/messages",
     "/api/v1/milestones/:milestoneIndex",
+    "/api/v1/milestones/:milestoneIndex/proof/:messageId",
     "/api/v1/milestones/:milestoneIndex/utxo-changes",
     "/api/v1/outputs/:outputId",
     "/api/v1/addresses/:address/outputs",

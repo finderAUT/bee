@@ -20,6 +20,7 @@ pub(crate) const ROUTE_MESSAGE_METADATA: &str = "/api/v1/messages/:messageId/met
 pub(crate) const ROUTE_MESSAGE_RAW: &str = "/api/v1/messages/:messageId/raw";
 pub(crate) const ROUTE_MESSAGES_FIND: &str = "/api/v1/messages";
 pub(crate) const ROUTE_MILESTONE: &str = "/api/v1/milestones/:milestoneIndex";
+pub(crate) const ROUTE_MILESTONE_PROOF: &str = "/api/v1/milestones/:milestoneIndex/proof/:messageId";
 pub(crate) const ROUTE_MILESTONE_UTXO_CHANGES: &str = "/api/v1/milestones/:milestoneIndex/utxo-changes";
 pub(crate) const ROUTE_OUTPUT: &str = "/api/v1/outputs/:outputId";
 pub(crate) const ROUTE_OUTPUTS_BECH32: &str = "/api/v1/addresses/:address/outputs";
@@ -37,7 +38,7 @@ pub(crate) const ROUTE_TRANSACTION_INCLUDED_MESSAGE: &str = "/api/v1/transaction
 pub(crate) const ROUTE_WHITE_FLAG: &str = "/api/plugins/debug/whiteflag";
 
 /// the routes that are available for public use
-pub(crate) const DEFAULT_PUBLIC_ROUTES: [&str; 21] = [
+pub(crate) const DEFAULT_PUBLIC_ROUTES: [&str; 22] = [
     ROUTE_BALANCE_BECH32,
     ROUTE_BALANCE_ED25519,
     ROUTE_HEALTH,
@@ -48,6 +49,7 @@ pub(crate) const DEFAULT_PUBLIC_ROUTES: [&str; 21] = [
     ROUTE_MESSAGE_RAW,
     ROUTE_MESSAGES_FIND,
     ROUTE_MILESTONE,
+    ROUTE_MILESTONE_PROOF,
     ROUTE_MILESTONE_UTXO_CHANGES,
     ROUTE_OUTPUT,
     ROUTE_OUTPUTS_BECH32,

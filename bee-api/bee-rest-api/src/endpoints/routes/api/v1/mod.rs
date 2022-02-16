@@ -11,6 +11,7 @@ pub mod message_metadata;
 pub mod message_raw;
 pub mod messages_find;
 pub mod milestone;
+pub mod milestone_proof;
 pub mod milestone_utxo_changes;
 pub mod output;
 pub mod outputs_bech32;
@@ -111,6 +112,11 @@ pub(crate) fn filter<B: StorageBackend>(
         storage.clone(),
     ))
     .or(milestone::filter(
+        public_routes.clone(),
+        allowed_ips.clone(),
+        tangle.clone(),
+    ))
+    .or(milestone_proof::filter(
         public_routes.clone(),
         allowed_ips.clone(),
         tangle.clone(),

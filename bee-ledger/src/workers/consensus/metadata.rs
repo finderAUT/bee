@@ -50,4 +50,12 @@ impl WhiteFlagMetadata {
     pub fn merkle_proof(&self) -> &[u8] {
         &self.merkle_proof
     }
+
+    pub fn included_messages(&self) -> &Vec<MessageId> {
+        &self.included_messages
+    }
+
+    pub fn index(&self) -> Option<MilestoneIndex> {
+        Some(self.index)
+    }
 }
