@@ -7,24 +7,26 @@ use crate::{
         config::ROUTE_MILESTONE, filters::with_tangle, path_params::milestone_index, permission::has_permission,
         rejection::CustomRejection, storage::StorageBackend,
     },
-    types::{body::SuccessBody, responses::MilestoneResponse},
+    types::{body::SuccessBody, responses::MilestoneProofResponse},
 };
 
 use bee_message::milestone::MilestoneIndex;
 use bee_runtime::resource::ResourceHandle;
-use bee_tangle::Tangle;
+use bee_tangle::{ConflictReason, Tangle};
 
 use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
 
 use std::net::IpAddr;
-use bee_ledger::workers::consensus;
-use bee_ledger::workers::consensus::WhiteFlagMetadata;
-use bee_ledger::workers::error::Error;
+use std::ops::Deref;
+use bee_ledger::{
+    workers::consensus::WhiteFlagMetadata,
+    workers::error::Error
+};
 use bee_message::MessageId;
 use crate::endpoints::path_params::message_id;
-use crate::types::responses::MilestoneProofResponse;
 
-fn path() -> impl Filter<Extract = (MilestoneIndex,), Error = Rejection> + Clone {
+//TODO check how to use multiple path params with Extract
+fn path() -> impl Filter<Extract = (MilestoneIndex,MessageId), Error = Rejection> + Clone {
     super::path()
         .and(warp::path("milestones"))
         .and(milestone_index())
@@ -52,8 +54,13 @@ pub(crate) async fn milestone_proof<B: StorageBackend>(
 ) -> Result<impl Reply, Rejection> {
     match tangle.get_milestone_message(milestone_index).await {
         Some(milestone_message) => {
-            let mut metadata = WhiteFlagMetadata::new(index);
-            rebuild_included_messages(tangle, storage, milestone_message.parents().iter().rev().copied().collect(), &mut metadata).await?;
+            //todo don't really need whiteflag metadata, index and a vec for included msgs should be enough
+            let mut metadata = WhiteFlagMetadata::new(milestone_index);
+            // get &[MessageId] from &Parent as it is needed like that to use iter().rev()
+            let parents_message_ids = Deref::deref(milestone_message.parents());
+            rebuild_included_messages(tangle, parents_message_ids.iter().rev().copied().collect(), &mut metadata)
+                .await
+                .map_err(|e| reject::custom(CustomRejection::BadRequest(e.to_string())))?;
             println!("{:?}", metadata.included_messages());
 
             Ok(warp::reply::json(&SuccessBody::new(MilestoneProofResponse {
@@ -69,7 +76,6 @@ pub(crate) async fn milestone_proof<B: StorageBackend>(
 
 async fn rebuild_included_messages<B: StorageBackend>(
     tangle: ResourceHandle<Tangle<B>>,
-    storage: &B,
     mut message_ids: Vec<MessageId>,
     metadata: &mut WhiteFlagMetadata,
 ) -> Result<(), Error> {
@@ -91,7 +97,15 @@ async fn rebuild_included_messages<B: StorageBackend>(
                 .find(|p| !visited.contains(p)) {
                 message_ids.push(*unvisited);
             } else {
-                apply_message(storage, message_id, &message, metadata)?;
+                //see concensus/whiteflag apply_message and consensus/worker.rs for each in loops
+                if meta.conflict() == ConflictReason::None
+                    && meta.flags().is_solid()
+                    && message.payload().is_some() {
+                    //included_messages can't be access directly because private
+                    //normal getter returns immutable reference -> leads "to cannot borrow as mutable"
+                    //TODO fixme
+                    metadata.included_messages().push(*message_id);
+                }
                 visited.insert(*message_id);
                 message_ids.pop();
             }

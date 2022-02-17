@@ -223,6 +223,8 @@ pub struct MilestoneProofResponse {
     pub included_messages: Vec<String>,
 }
 
+impl BodyInner for MilestoneProofResponse {}
+
 /// Response of GET /api/v1/milestone/{milestone_index}/utxo-changes.
 /// Returns all UTXO changes that happened at a specific milestone.
 #[derive(Clone, Debug, Serialize, Deserialize)]

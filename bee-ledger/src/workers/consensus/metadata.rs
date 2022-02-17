@@ -18,7 +18,7 @@ pub struct WhiteFlagMetadata {
     pub(crate) excluded_no_transaction_messages: Vec<MessageId>,
     /// The messages which were excluded because they were conflicting with the ledger state.
     pub(crate) excluded_conflicting_messages: Vec<(MessageId, ConflictReason)>,
-    // The messages which mutate the ledger in the order in which they were applied.
+    /// The messages which mutate the ledger in the order in which they were applied.
     pub(crate) included_messages: Vec<MessageId>,
     /// The outputs created within the confirmed milestone.
     pub(crate) created_outputs: HashMap<OutputId, CreatedOutput>,
@@ -51,10 +51,12 @@ impl WhiteFlagMetadata {
         &self.merkle_proof
     }
 
+    /// Returns the included messages of a `WhiteFlagMetadata`.
     pub fn included_messages(&self) -> &Vec<MessageId> {
         &self.included_messages
     }
 
+    /// Returns the milestone index a `WhiteFlagMetadata`.
     pub fn index(&self) -> Option<MilestoneIndex> {
         Some(self.index)
     }
