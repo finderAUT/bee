@@ -19,7 +19,6 @@ use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
 use std::net::IpAddr;
 use std::ops::Deref;
 use bee_ledger::{
-    workers::consensus::WhiteFlagMetadata,
     workers::error::Error
 };
 use bee_message::MessageId;
@@ -50,22 +49,22 @@ pub(crate) fn filter<B: StorageBackend>(
 
 pub(crate) async fn milestone_proof<B: StorageBackend>(
     milestone_index: MilestoneIndex,
+    message_id: MessageId,
     tangle: ResourceHandle<Tangle<B>>,
 ) -> Result<impl Reply, Rejection> {
     match tangle.get_milestone_message(milestone_index).await {
         Some(milestone_message) => {
-            //todo don't really need whiteflag metadata, index and a vec for included msgs should be enough
-            let mut metadata = WhiteFlagMetadata::new(milestone_index);
+            let mut included_messages = Vec::new();
             // get &[MessageId] from &Parent as it is needed like that to use iter().rev()
             let parents_message_ids = Deref::deref(milestone_message.parents());
-            rebuild_included_messages(tangle, parents_message_ids.iter().rev().copied().collect(), &mut metadata)
+            rebuild_included_messages(tangle, milestone_index, parents_message_ids.iter().rev().copied().collect(), &mut included_messages)
                 .await
                 .map_err(|e| reject::custom(CustomRejection::BadRequest(e.to_string())))?;
-            println!("{:?}", metadata.included_messages());
+            println!("{:?}", included_messages);
 
             Ok(warp::reply::json(&SuccessBody::new(MilestoneProofResponse {
                 milestone_index: *milestone_index,
-                included_messages: metadata.included_messages().iter().map(|msg| msg.to_string()).collect()
+                included_messages: included_messages.iter().map(|msg| msg.to_string()).collect()
             })))
         },
         None => Err(reject::custom(CustomRejection::NotFound(
@@ -76,8 +75,9 @@ pub(crate) async fn milestone_proof<B: StorageBackend>(
 
 async fn rebuild_included_messages<B: StorageBackend>(
     tangle: ResourceHandle<Tangle<B>>,
+    milestone_index: MilestoneIndex,
     mut message_ids: Vec<MessageId>,
-    metadata: &mut WhiteFlagMetadata,
+    included_messages: &mut Vec<MessageId>, //placement of mut / &mut in function params https://users.rust-lang.org/t/solved-placement-of-mut-in-function-parameters/19891/2
 ) -> Result<(), Error> {
     let mut visited = HashSet::new();
     while let Some(message_id) = message_ids.last() {
@@ -87,7 +87,8 @@ async fn rebuild_included_messages<B: StorageBackend>(
             .as_ref()
             .and_then(|v| v.message_and_metadata().cloned())
         {
-            if meta.milestone_index() != metadata.index() {
+            //TODO best way to compare Option with value?
+            if meta.milestone_index() != Some(milestone_index) {
                 visited.insert(*message_id);
                 message_ids.pop();
                 continue;
@@ -104,7 +105,7 @@ async fn rebuild_included_messages<B: StorageBackend>(
                     //included_messages can't be access directly because private
                     //normal getter returns immutable reference -> leads "to cannot borrow as mutable"
                     //TODO fixme
-                    metadata.included_messages().push(*message_id);
+                    included_messages.push(*message_id);
                 }
                 visited.insert(*message_id);
                 message_ids.pop();
