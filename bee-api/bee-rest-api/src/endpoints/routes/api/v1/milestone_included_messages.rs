@@ -23,14 +23,12 @@ use bee_ledger::{
 };
 use bee_message::MessageId;
 use crate::endpoints::path_params::message_id;
-use crate::endpoints::routes::api::v1::milestone_included_messages::rebuild_included_messages;
 
-fn path() -> impl Filter<Extract = (MilestoneIndex,MessageId), Error = Rejection> + Clone {
+fn path() -> impl Filter<Extract = (MilestoneIndex,), Error = Rejection> + Clone {
     super::path()
         .and(warp::path("milestones"))
         .and(milestone_index())
-        .and(warp::path("proof"))
-        .and(message_id())
+        .and(warp::path("included-messages"))
         .and(warp::path::end())
 }
 
@@ -43,13 +41,12 @@ pub(crate) fn filter<B: StorageBackend>(
         .and(warp::get())
         .and(has_permission(ROUTE_MILESTONE, public_routes, allowed_ips))
         .and(with_tangle(tangle))
-        .and_then(milestone_proof)
+        .and_then(milestone_included_messages)
         .boxed()
 }
 
-pub(crate) async fn milestone_proof<B: StorageBackend>(
+pub(crate) async fn milestone_included_messages<B: StorageBackend>(
     milestone_index: MilestoneIndex,
-    message_id: MessageId,
     tangle: ResourceHandle<Tangle<B>>,
 ) -> Result<impl Reply, Rejection> {
     match tangle.get_milestone_message(milestone_index).await {
@@ -72,8 +69,8 @@ pub(crate) async fn milestone_proof<B: StorageBackend>(
         ))),
     }
 }
-/*
-async fn rebuild_included_messages<B: StorageBackend>(
+
+pub(crate) async fn rebuild_included_messages<B: StorageBackend>(
     tangle: ResourceHandle<Tangle<B>>,
     milestone_index: MilestoneIndex,
     mut message_ids: Vec<MessageId>,
@@ -116,4 +113,4 @@ async fn rebuild_included_messages<B: StorageBackend>(
     }
 
     Ok(())
-}*/
+}
