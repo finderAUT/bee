@@ -29,7 +29,7 @@
     }
   },
   "autopeering": {
-    "enabled": false,
+    "enabled": true,
     "bindAddress": "0.0.0.0:14626",
     "entryNodes": [
       "/dns/lucamoser.ch/udp/14826/autopeering/4H6WV54tB29u8xCcEaMGQMn37LFvM1ynNpp27TTXaqNM",
@@ -107,6 +107,7 @@
       "/api/v1/treasury",
       "/api/v1/transactions/:transactionId/included-message",
       "/api/v1/milestones/:milestoneIndex",
+      "/api/v1/milestones/:milestoneIndex/included-messages",
       "/api/v1/milestones/:milestoneIndex/utxo-changes"
     ],
     "allowedIps": [

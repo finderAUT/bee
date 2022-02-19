@@ -122,6 +122,11 @@ pub(crate) fn filter<B: StorageBackend>(
         allowed_ips.clone(),
         tangle.clone(),
     ))
+    .or(milestone_included_messages::filter(
+        public_routes.clone(),
+        allowed_ips.clone(),
+        tangle.clone(),
+    ))
     .or(milestone_utxo_changes::filter(
         public_routes.clone(),
         allowed_ips.clone(),

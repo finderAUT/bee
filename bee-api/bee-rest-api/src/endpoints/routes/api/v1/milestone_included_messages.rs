@@ -22,7 +22,7 @@ use bee_ledger::{
     workers::error::Error
 };
 use bee_message::MessageId;
-use crate::endpoints::path_params::message_id;
+use bee_message::payload::Payload;
 
 fn path() -> impl Filter<Extract = (MilestoneIndex,), Error = Rejection> + Clone {
     super::path()
@@ -95,11 +95,15 @@ pub(crate) async fn rebuild_included_messages<B: StorageBackend>(
                 .find(|p| !visited.contains(p)) {
                 message_ids.push(*unvisited);
             } else {
-                //see concensus/whiteflag apply_message and consensus/worker.rs for each in loops
+                //see consensus/whiteflag apply_message and consensus/worker.rs for each in loops
                 if meta.conflict() == ConflictReason::None
                     && meta.flags().is_solid()
-                    && message.payload().is_some() {
-                    included_messages.push(*message_id);
+                {
+                    //Rust if let syntax / pattern matching https://www.seventeencups.net/posts/why-if-let/
+                    //https://users.rust-lang.org/t/i-have-a-hard-time-understanding-the-if-let-syntax/48816/12
+                    if let Some(Payload::Transaction(transaction)) = message.payload() {
+                        included_messages.push(*message_id);
+                    }
                 }
                 visited.insert(*message_id);
                 message_ids.pop();

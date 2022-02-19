@@ -1,7 +1,6 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::collections::HashSet;
 use crate::{
     endpoints::{
         config::ROUTE_MILESTONE, filters::with_tangle, path_params::milestone_index, permission::has_permission,
@@ -12,15 +11,13 @@ use crate::{
 
 use bee_message::milestone::MilestoneIndex;
 use bee_runtime::resource::ResourceHandle;
-use bee_tangle::{ConflictReason, Tangle};
+use bee_tangle::{Tangle};
 
 use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
 
 use std::net::IpAddr;
 use std::ops::Deref;
-use bee_ledger::{
-    workers::error::Error
-};
+
 use bee_message::MessageId;
 use crate::endpoints::path_params::message_id;
 use crate::endpoints::routes::api::v1::milestone_included_messages::rebuild_included_messages;

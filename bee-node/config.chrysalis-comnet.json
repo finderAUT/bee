@@ -29,7 +29,7 @@
     }
   },
   "autopeering": {
-    "enabled": false,
+    "enabled": true,
     "bindAddress": "0.0.0.0:14626",
     "entryNodes": [
       "/dns/entry.comnet.tanglebay.com/udp/14636/autopeering/iot4By1FD4pFLrGJ6AAe7YEeSu9RbW9xnPUmxMdQenC"
@@ -83,6 +83,7 @@
       "/api/v1/treasury",
       "/api/v1/transactions/:transactionId/included-message",
       "/api/v1/milestones/:milestoneIndex",
+      "/api/v1/milestones/:milestoneIndex/included-messages",
       "/api/v1/milestones/:milestoneIndex/utxo-changes"
     ],
     "allowedIps": [

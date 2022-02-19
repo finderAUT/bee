@@ -214,7 +214,8 @@ pub struct MilestoneResponse {
 
 impl BodyInner for MilestoneResponse {}
 
-/// Response of GET /api/v1/milestone/{milestone_index}/proof.
+//TODO include proof data, remove included messages
+/// Response of GET /api/v1/milestone/{milestone_index}/proof/{message_id}.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MilestoneProofResponse {
     #[serde(rename = "index")]
@@ -224,6 +225,17 @@ pub struct MilestoneProofResponse {
 }
 
 impl BodyInner for MilestoneProofResponse {}
+
+/// Response of GET /api/v1/milestone/{milestone_index}/included-messages.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct MilestoneIncludedMessagesResponse {
+    #[serde(rename = "index")]
+    pub milestone_index: u32,
+    #[serde(rename = "includedMessages")]
+    pub included_messages: Vec<String>,
+}
+
+impl BodyInner for MilestoneIncludedMessagesResponse {}
 
 /// Response of GET /api/v1/milestone/{milestone_index}/utxo-changes.
 /// Returns all UTXO changes that happened at a specific milestone.

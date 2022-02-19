@@ -81,6 +81,7 @@
       "/api/v1/treasury",
       "/api/v1/transactions/:transactionId/included-message",
       "/api/v1/milestones/:milestoneIndex",
+      "/api/v1/milestones/:milestoneIndex/included-messages",
       "/api/v1/milestones/:milestoneIndex/utxo-changes"
     ],
     "allowedIps": [
