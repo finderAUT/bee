@@ -82,3 +82,17 @@ cp config.template.json config.json
 # Using Docker
 
 We also provide a `Dockerfile` that allows you to quickly deploy a Bee node. Please refer to the [Docker](../documentation/docs/getting_started/docker.md) section of the Bee documentation for more information.
+
+```
+podman run \
+  -v $(pwd)/config.json:/config.json:Z \
+  -v $(pwd)/storage:/storage:Z \
+  -v $(pwd)/snapshots:/snapshots:Z \
+  --name bee\
+  --net=host \
+  --ulimit nofile=8192:8192 \
+  -d \
+ bee:milestone-msg-proof
+```
+
+https://www.tutorialworks.com/podman-rootless-volumes/
