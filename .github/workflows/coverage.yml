@@ -3,11 +3,10 @@ name: Coverage
 on:
   push:
     branches:
-      - dev
-      - mainnet
-      - mainnet-develop
-      - shimmer
-      - shimmer-develop
+      - production
+      - 'mainnet-develop*'
+      - staging
+      - 'shimmer-develop*'
     paths:
       - '**.rs'
       - '**.toml'
@@ -36,14 +35,6 @@ jobs:
         with:
           crate: rustfilt
           version: 0.2.1
-
-      - name: Install dashboard frontend
-        run: |
-          git submodule init
-          git submodule update --recursive --remote
-          cd bee-node/src/plugins/dashboard/frontend/
-          npm install
-          npm run build-bee
 
       - name: Run test coverage
         run: bash .github/workflows/scripts/coverage.sh

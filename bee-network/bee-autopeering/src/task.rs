@@ -1,6 +1,11 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::{collections::HashMap, future::Future, time::Duration};
+
+use priority_queue::PriorityQueue;
+use tokio::{sync::oneshot, task::JoinHandle, time};
+
 use crate::{
     peer::{
         lists::{ActivePeersList, ReplacementPeersList},
@@ -8,11 +13,6 @@ use crate::{
     },
     time::SECOND,
 };
-
-use priority_queue::PriorityQueue;
-use tokio::{sync::oneshot, task::JoinHandle, time};
-
-use std::{collections::HashMap, future::Future, time::Duration};
 
 pub(crate) const MAX_SHUTDOWN_PRIORITY: u8 = 255;
 const SHUTDOWN_TIMEOUT: Duration = Duration::from_secs(5 * SECOND);
@@ -117,7 +117,10 @@ impl<S: PeerStore> TaskManager<S> {
             let shutdown_tx = shutdown_senders.remove(&task_name).unwrap();
 
             log::trace!("Shutting down: {}", task_name);
-            shutdown_tx.send(()).expect("error sending shutdown signal");
+
+            if shutdown_tx.send(()).is_err() {
+                log::error!("Error sending shutdown signal to task {task_name}.");
+            }
         }
 
         // Wait for all tasks to shutdown down in a certain order and maximum amount of time.

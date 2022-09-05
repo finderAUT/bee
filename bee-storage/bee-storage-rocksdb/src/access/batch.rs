@@ -1,11 +1,6 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    column_families::*,
-    storage::{Storage, StorageBackend},
-};
-
 use bee_common::packable::Packable;
 use bee_ledger::types::{
     snapshot::info::SnapshotInfo, Balance, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt,
@@ -22,11 +17,16 @@ use bee_storage::access::{Batch, BatchBuilder};
 use bee_tangle::{
     metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
 };
-
 use rocksdb::{WriteBatch, WriteOptions};
+
+use crate::{
+    column_families::*,
+    storage::{Storage, StorageBackend},
+};
 
 #[derive(Default)]
 pub struct StorageBatch {
+    should_lock: bool,
     inner: WriteBatch,
     key_buf: Vec<u8>,
     value_buf: Vec<u8>,
@@ -39,7 +39,12 @@ impl BatchBuilder for Storage {
         let mut write_options = WriteOptions::default();
         write_options.set_sync(false);
         write_options.disable_wal(!durability);
+
+        let guard = batch.should_lock.then(|| self.locks.message_id_to_metadata.read());
+
         self.inner.write_opt(batch.inner, &write_options)?;
+
+        drop(guard);
 
         Ok(())
     }
@@ -83,6 +88,8 @@ impl Batch<MessageId, MessageMetadata> for Storage {
         message_id: &MessageId,
         metadata: &MessageMetadata,
     ) -> Result<(), <Self as StorageBackend>::Error> {
+        batch.should_lock = true;
+
         batch.value_buf.clear();
         // Packing to bytes can't fail.
         metadata.pack(&mut batch.value_buf).unwrap();
@@ -99,6 +106,8 @@ impl Batch<MessageId, MessageMetadata> for Storage {
         batch: &mut Self::Batch,
         message_id: &MessageId,
     ) -> Result<(), <Self as StorageBackend>::Error> {
+        batch.should_lock = true;
+
         batch
             .inner
             .delete_cf(self.cf_handle(CF_MESSAGE_ID_TO_METADATA)?, message_id);

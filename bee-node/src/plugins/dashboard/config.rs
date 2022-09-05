@@ -1,10 +1,10 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::net::{IpAddr, SocketAddr, ToSocketAddrs};
+
 use multiaddr::{Multiaddr, Protocol};
 use serde::Deserialize;
-
-use std::net::{IpAddr, SocketAddr, ToSocketAddrs};
 
 const DEFAULT_SESSION_TIMEOUT: u64 = 86400;
 const DEFAULT_USER: &str = "admin";
@@ -12,7 +12,7 @@ const DEFAULT_PASSWORD_SALT: &str = "0000000000000000000000000000000000000000000
 const DEFAULT_PASSWORD_HASH: &str = "0000000000000000000000000000000000000000000000000000000000000000";
 const DEFAULT_BIND_ADDRESS: &str = "/ip4/0.0.0.0/tcp/8081";
 
-#[derive(Default, Deserialize)]
+#[derive(Default, Deserialize, PartialEq)]
 pub struct DashboardAuthConfigBuilder {
     #[serde(alias = "sessionTimeout")]
     session_timeout: Option<u64>,
@@ -68,7 +68,7 @@ impl DashboardAuthConfig {
     }
 }
 
-#[derive(Default, Deserialize)]
+#[derive(Default, Deserialize, PartialEq)]
 pub struct DashboardConfigBuilder {
     #[serde(alias = "bindAddress")]
     bind_address: Option<Multiaddr>,

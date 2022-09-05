@@ -9,7 +9,7 @@ LABEL org.label-schema.description="Bee node software to connect to the IOTA and
 LABEL org.label-schema.name="iotaledger/bee"
 LABEL org.label-schema.schema-version="1.0"
 LABEL org.label-schema.vcs-url="https://github.com/iotaledger/bee"
-LABEL org.label-schema.usage="https://github.com/iotaledger/bee/blob/mainnet/documentation/docs/getting_started/docker.md"
+LABEL org.label-schema.usage="https://github.com/iotaledger/bee/blob/production/documentation/docs/getting_started/docker.md"
 
 RUN apt-get update && \
     apt-get install cmake clang -y
@@ -17,35 +17,14 @@ RUN apt-get update && \
 WORKDIR /bee
 COPY . .
 
-ENV NVM_DIR /opt/nvm
-ENV NODE_VERSION 14.19.0
-
-RUN if [ "$WITH_DASHBOARD" = true ] ; then \ 
-    mkdir $NVM_DIR \
-    &&curl https://raw.githubusercontent.com/creationix/nvm/v0.39.1/install.sh | bash \
-    && . $NVM_DIR/nvm.sh \
-    && nvm install $NODE_VERSION \
-    && nvm alias default $NODE_VERSION \
-    && nvm use default \
-    && git submodule update --init --recursive \
-    && cd bee-node/src/plugins/dashboard/frontend \
-    && npm install \
-    && npm run build-bee \
-    ; fi
-
 RUN if [ "$WITH_DASHBOARD" = true ] ; then cargo build --profile production --features dashboard --bin bee ; else cargo build --profile production --bin bee ; fi
 
 ############################
 # Image
 ############################
-FROM debian:buster-slim
-
-RUN apt-get update && \
-    apt-get install openssl ca-certificates -y
-
-RUN update-ca-certificates
-
-RUN rm -rf /var/lib/apt
+# https://console.cloud.google.com/gcr/images/distroless/global/cc-debian11
+# using distroless cc "nonroot" image, which includes everything in the base image (glibc, libssl and openssl)
+FROM gcr.io/distroless/cc-debian11:nonroot
 
 # API
 EXPOSE 14265/tcp
@@ -58,11 +37,19 @@ EXPOSE 8081/tcp
 # Autopeering
 EXPOSE 14626/udp
 
-COPY --from=build /bee/target/production/bee /
+COPY --chown=nonroot:nonroot --from=build /bee/target/production/bee /app/bee
 
 # Copy the profiles
-COPY --from=build /bee/bee-node/config.chrysalis-comnet.toml .
-COPY --from=build /bee/bee-node/config.chrysalis-devnet.toml .
-COPY --from=build /bee/bee-node/config.chrysalis-mainnet.toml .
+COPY --from=build /bee/bee-node/config.chrysalis-devnet.toml /app/.
+COPY --from=build /bee/bee-node/config.chrysalis-mainnet.toml /app/.
 
-ENTRYPOINT ["/bee"]
+COPY --from=build /bee/bee-node/config.chrysalis-devnet.json /app/.
+COPY --from=build /bee/bee-node/config.chrysalis-mainnet.json /app/.
+
+USER nonroot
+
+WORKDIR /app
+
+ENTRYPOINT ["/app/bee"]
+
+CMD ["--config", "config.chrysalis-mainnet.json"]

@@ -25,20 +25,18 @@
     "maxUnknownPeers": 4,
     "maxDiscoveredPeers": 8,
     "peering": {
-      "peers": []
     }
   },
   "autopeering": {
     "enabled": true,
     "bindAddress": "0.0.0.0:14626",
     "entryNodes": [
-      "/dns/lucamoser.ch/udp/14826/autopeering/4H6WV54tB29u8xCcEaMGQMn37LFvM1ynNpp27TTXaqNM",
       "/dns/entry-hornet-0.h.chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/iotaPHdAn7eueBnXtikZMwhfPXaeGJGXDt4RBuLuGgb",
       "/dns/entry-hornet-1.h.chrysalis-mainnet.iotaledger.net/udp/14626/autopeering/iotaJJqMd5CQvv1A61coSQCYW9PNT1QKPs7xh2Qg5K2",
       "/dns/entry-0.mainnet.tanglebay.com/udp/14626/autopeering/iot4By1FD4pFLrGJ6AAe7YEeSu9RbW9xnPUmxMdQenC",
       "/dns/entry-1.mainnet.tanglebay.com/udp/14636/autopeering/CATsx21mFVvQQPXeDineGs9DDeKvoBBQdzcmR6ffCkVA"
     ],
-    "entryNodesPreferIpv6": false,
+    "entryNodesPreferIPv6": false,
     "runAsEntryNode": false,
     "dropNeighborsOnSaltUpdate": false,
     "peerStoragePath": "./storage/mainnet/peers"
@@ -71,12 +69,22 @@
         {
           "publicKey": "7bac2209b576ea2235539358c7df8ca4d2f2fc35a663c760449e65eba9f8a6e7",
           "start": 2108160,
-          "end": 3666260
+          "end": 3359999
         },
         {
           "publicKey": "edd9c639a719325e465346b84133bf94740b7d476dd87fc949c0e8df516f9954",
           "start": 2888660,
-          "end": 4443860
+          "end": 3359999
+        },
+        {
+          "publicKey": "47a5098c696e0fb53e6339edac574be4172cb4701a8210c2ae7469b536fd2c59",
+          "start": 3360000,
+          "end": 0
+        },
+        {
+          "publicKey": "ae4e03072b4869e87dd4cd59315291a034493a8c202b43b257f9c07bc86a2f3e",
+          "start": 3360000,
+          "end": 0
         }
       ]
     },
@@ -142,8 +150,7 @@
     "path": "./storage/mainnet/tangle"
   },
   "tangle": {
-    "belowMaxDepth": 15,
-    "numPartitions": 16
+    "belowMaxDepth": 15
   },
   "mqtt": {
     "address": "tcp://localhost:1883"

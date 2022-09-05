@@ -1,20 +1,12 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use super::{config::FullNodeConfig, FullNode, FullNodeError};
-
-use crate::{
-    config::NetworkSpec,
-    core::{Core, CoreError, ResourceRegister, TopologicalOrder, WorkerStart, WorkerStop},
-    plugins::{self, Mqtt, VersionChecker},
-    shutdown,
-    storage::NodeStorageBackend,
-    util, AUTOPEERING_VERSION,
+use std::{
+    any::{type_name, Any, TypeId},
+    collections::HashMap,
 };
 
-#[cfg(feature = "dashboard")]
-use crate::plugins::Dashboard;
-
+use async_trait::async_trait;
 use bee_autopeering::{
     stores::{Options as RocksDbPeerStoreConfigOptions, RocksDbPeerStore, RocksDbPeerStoreConfig},
     NeighborValidator, ServiceProtocol, AUTOPEERING_SERVICE_NAME,
@@ -26,13 +18,18 @@ use bee_runtime::{
     worker::Worker,
 };
 use bee_storage::system::StorageHealth;
-
-use async_trait::async_trait;
 use fxhash::FxBuildHasher;
 
-use std::{
-    any::{type_name, Any, TypeId},
-    collections::HashMap,
+use super::{config::FullNodeConfig, FullNode, FullNodeError};
+#[cfg(feature = "dashboard")]
+use crate::plugins::Dashboard;
+use crate::{
+    config::NetworkSpec,
+    core::{Core, CoreError, ResourceRegister, TopologicalOrder, WorkerStart, WorkerStop},
+    plugins::{self, Mqtt, VersionChecker},
+    shutdown,
+    storage::NodeStorageBackend,
+    util, AUTOPEERING_VERSION,
 };
 
 /// A builder to create a Bee full node.
@@ -149,11 +146,11 @@ impl<S: NodeStorageBackend> NodeBuilder<FullNode<S>> for FullNodeBuilder<S> {
         let builder = add_node_resources(builder)?;
 
         // Initialize everything.
-        let (gossip_rx, builder) = initialize_gossip_layer(builder).await?;
+        let (gossip_rx, builder) = initialize_gossip_layer(builder)?;
         let (autopeering_rx, builder) = initialize_autopeering(builder).await?;
         let builder = initialize_ledger(builder);
         let builder = initialize_protocol(builder, gossip_rx, autopeering_rx);
-        let builder = initialize_api(builder).await;
+        let builder = initialize_api(builder);
         let builder = initialize_tangle(builder);
 
         // Start the version checker.
@@ -249,7 +246,7 @@ fn add_node_resources<S: NodeStorageBackend>(builder: FullNodeBuilder<S>) -> Res
 }
 
 /// Initializes the gossip layer.
-async fn initialize_gossip_layer<S: NodeStorageBackend>(
+fn initialize_gossip_layer<S: NodeStorageBackend>(
     builder: FullNodeBuilder<S>,
 ) -> Result<(NetworkEventReceiver, FullNodeBuilder<S>), FullNodeError> {
     log::info!("Initializing gossip protocol...");
@@ -262,7 +259,6 @@ async fn initialize_gossip_layer<S: NodeStorageBackend>(
 
     let (builder, network_events) =
         bee_gossip::integrated::init::<FullNode<S>>(gossip_cfg, keypair, network_id, builder)
-            .await
             .map_err(FullNodeError::GossipLayerInitialization)?;
 
     Ok((network_events, builder))
@@ -384,7 +380,7 @@ fn create_local_autopeering_entity<S: NodeStorageBackend>(
 }
 
 /// Initializes the API.
-async fn initialize_api<S: NodeStorageBackend>(builder: FullNodeBuilder<S>) -> FullNodeBuilder<S> {
+fn initialize_api<S: NodeStorageBackend>(builder: FullNodeBuilder<S>) -> FullNodeBuilder<S> {
     log::info!("Initializing REST API...");
 
     let config = builder.config();
@@ -399,11 +395,7 @@ async fn initialize_api<S: NodeStorageBackend>(builder: FullNodeBuilder<S>) -> F
     let rest_api_cfg = config.rest_api.clone();
     let protocol_cfg = config.protocol.clone();
 
-    let builder =
-        bee_rest_api::endpoints::init_full_node::<FullNode<S>>(rest_api_cfg, protocol_cfg, network_id, hrp, builder)
-            .await;
-
-    builder
+    bee_rest_api::endpoints::init_full_node::<FullNode<S>>(rest_api_cfg, protocol_cfg, network_id, hrp, builder)
 }
 
 /// Initializes the Tangle.

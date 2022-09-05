@@ -19,6 +19,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security -->
 
+## 0.5.0 - 2022-03-17
+
+### Added
+
+- Tests for the `InsertStrict` access trait;
+
+## 0.4.0 - 2022-03-11
+
+### Added
+
+- Tests for the `Update` access trait;
+
 ## 0.3.0 - 2021-06-10
 
 ### Changed

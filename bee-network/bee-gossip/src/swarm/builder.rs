@@ -1,9 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use super::{behaviour::SwarmBehaviour, error::Error};
-
-use crate::service::event::InternalEventSender;
+use std::time::Duration;
 
 use libp2p::{
     core::{
@@ -15,7 +13,8 @@ use libp2p::{
     tcp, yamux, Swarm, Transport,
 };
 
-use std::time::Duration;
+use super::{behaviour::SwarmBehaviour, error::Error};
+use crate::service::event::InternalEventSender;
 
 const MAX_CONNECTIONS_PER_PEER: u32 = 1;
 const DEFAULT_CONNECTION_TIMEOUT_SECS: u64 = 10;
@@ -25,7 +24,7 @@ pub fn build_swarm(
     internal_sender: InternalEventSender,
 ) -> Result<Swarm<SwarmBehaviour>, Error> {
     let local_pk = local_keys.public();
-    let local_id = local_pk.clone().into_peer_id();
+    let local_id = local_pk.to_peer_id();
 
     let noise_keys = noise::Keypair::<noise::X25519Spec>::new()
         .into_authentic(local_keys)

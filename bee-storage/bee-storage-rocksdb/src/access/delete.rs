@@ -1,11 +1,6 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    column_families::*,
-    storage::{Storage, StorageBackend},
-};
-
 use bee_common::packable::Packable;
 use bee_ledger::types::{
     snapshot::info::SnapshotInfo, Balance, ConsumedOutput, CreatedOutput, LedgerIndex, OutputDiff, Receipt,
@@ -23,6 +18,11 @@ use bee_tangle::{
     metadata::MessageMetadata, solid_entry_point::SolidEntryPoint, unreferenced_message::UnreferencedMessage,
 };
 
+use crate::{
+    column_families::*,
+    storage::{Storage, StorageBackend},
+};
+
 impl Delete<MessageId, Message> for Storage {
     fn delete(&self, message_id: &MessageId) -> Result<(), <Self as StorageBackend>::Error> {
         self.inner
@@ -34,8 +34,12 @@ impl Delete<MessageId, Message> for Storage {
 
 impl Delete<MessageId, MessageMetadata> for Storage {
     fn delete(&self, message_id: &MessageId) -> Result<(), <Self as StorageBackend>::Error> {
+        let guard = self.locks.message_id_to_metadata.read();
+
         self.inner
             .delete_cf(self.cf_handle(CF_MESSAGE_ID_TO_METADATA)?, message_id)?;
+
+        drop(guard);
 
         Ok(())
     }

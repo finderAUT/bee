@@ -1,6 +1,13 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::net::IpAddr;
+
+use bee_gossip::PeerId;
+use bee_protocol::workers::PeerManager;
+use bee_runtime::resource::ResourceHandle;
+use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
+
 use crate::{
     endpoints::{
         config::ROUTE_PEER, filters::with_peer_manager, path_params::peer_id, permission::has_permission,
@@ -8,14 +15,6 @@ use crate::{
     },
     types::{body::SuccessBody, dtos::PeerDto, responses::PeerResponse},
 };
-
-use bee_gossip::PeerId;
-use bee_protocol::workers::PeerManager;
-use bee_runtime::resource::ResourceHandle;
-
-use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
-
-use std::net::IpAddr;
 
 fn path() -> impl Filter<Extract = (PeerId,), Error = Rejection> + Clone {
     super::path()
@@ -38,10 +37,11 @@ pub(crate) fn filter(
 }
 
 pub(crate) fn peer(peer_id: PeerId, peer_manager: ResourceHandle<PeerManager>) -> Result<impl Reply, Rejection> {
-    match peer_manager.get(&peer_id) {
-        Some(peer_entry) => Ok(warp::reply::json(&SuccessBody::new(PeerResponse(PeerDto::from(
-            peer_entry.0.as_ref(),
-        ))))),
-        None => Err(reject::custom(CustomRejection::NotFound("peer not found".to_string()))),
-    }
+    peer_manager
+        .get_map(&peer_id, |peer_entry| {
+            Ok(warp::reply::json(&SuccessBody::new(PeerResponse(PeerDto::from(
+                peer_entry.0.as_ref(),
+            )))))
+        })
+        .unwrap_or_else(|| Err(reject::custom(CustomRejection::NotFound("peer not found".to_string()))))
 }

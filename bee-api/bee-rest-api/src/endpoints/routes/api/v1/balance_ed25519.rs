@@ -1,6 +1,18 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::net::IpAddr;
+
+use bee_ledger::{
+    types::{Balance, LedgerIndex},
+    workers::{consensus::ConsensusWorkerCommand, error::Error},
+};
+use bee_message::address::{Address, Ed25519Address};
+use futures::channel::oneshot;
+use log::error;
+use tokio::sync::mpsc;
+use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
+
 use crate::{
     endpoints::{
         config::ROUTE_BALANCE_ED25519, filters::with_consensus_worker, path_params::ed25519_address,
@@ -8,19 +20,6 @@ use crate::{
     },
     types::{body::SuccessBody, responses::BalanceAddressResponse},
 };
-
-use bee_ledger::{
-    types::{Balance, LedgerIndex},
-    workers::{consensus::ConsensusWorkerCommand, error::Error},
-};
-use bee_message::address::{Address, Ed25519Address};
-
-use futures::channel::oneshot;
-use log::error;
-use tokio::sync::mpsc;
-use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
-
-use std::net::IpAddr;
 
 fn path() -> impl Filter<Extract = (Ed25519Address,), Error = warp::Rejection> + Clone {
     super::path()
@@ -59,18 +58,21 @@ pub(crate) async fn balance_ed25519(
             "unable to fetch the balance of the address".to_string(),
         ))
     })? {
-        (Ok(response), ledger_index) => match response {
-            Some(balance) => Ok(warp::reply::json(&SuccessBody::new(BalanceAddressResponse {
-                address_type: 1,
+        (Ok(response), ledger_index) => {
+            let (balance, dust_allowed) = if let Some(balance) = response {
+                (balance.amount(), balance.dust_allowed())
+            } else {
+                (0, false)
+            };
+
+            Ok(warp::reply::json(&SuccessBody::new(BalanceAddressResponse {
+                address_type: Ed25519Address::KIND,
                 address: addr.to_string(),
-                balance: balance.amount(),
-                dust_allowed: balance.dust_allowed(),
+                balance,
+                dust_allowed,
                 ledger_index: *ledger_index,
-            }))),
-            None => Err(reject::custom(CustomRejection::NotFound(
-                "balance not found".to_string(),
-            ))),
-        },
+            })))
+        }
         (Err(e), _) => {
             error!("unable to fetch the balance of the address: {}", e);
             Err(reject::custom(CustomRejection::ServiceUnavailable(

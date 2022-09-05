@@ -1,15 +1,14 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::plugins::Plugin;
-
-use bee_protocol::workers::event::MpsMetricsUpdated;
-use bee_runtime::event::Bus;
+use std::convert::Infallible;
 
 use async_trait::async_trait;
+use bee_protocol::workers::event::MpsMetricsUpdated;
+use bee_runtime::event::Bus;
 use log::info;
 
-use std::convert::Infallible;
+use crate::plugins::Plugin;
 
 pub struct Mps;
 
@@ -21,7 +20,7 @@ impl Plugin for Mps {
     async fn start(_: Self::Config, bus: &Bus<'_>) -> Result<Self, Self::Error> {
         bus.add_listener::<(), MpsMetricsUpdated, _>(|metrics| {
             info!(
-                "incoming {} new {} known {} invalid {} outgoing {}",
+                "Mps: incoming {} new {} known {} invalid {} outgoing {}",
                 metrics.incoming, metrics.new, metrics.known, metrics.invalid, metrics.outgoing
             );
         });

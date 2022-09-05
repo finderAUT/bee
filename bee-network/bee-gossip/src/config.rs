@@ -3,12 +3,12 @@
 
 #![cfg(feature = "full")]
 
-use crate::alias;
+use std::{borrow::Cow, collections::HashSet};
 
 use libp2p::{multiaddr::Protocol, Multiaddr, PeerId};
 use serde::Deserialize;
 
-use std::{borrow::Cow, collections::HashSet};
+use crate::alias;
 
 const DEFAULT_BIND_MULTIADDR: &str = "/ip4/0.0.0.0/tcp/15600";
 
@@ -197,7 +197,7 @@ impl Default for NetworkConfig {
 }
 
 /// A network configuration builder.
-#[derive(Default, Deserialize)]
+#[derive(Default, Deserialize, PartialEq)]
 #[must_use]
 pub struct NetworkConfigBuilder {
     #[serde(alias = "bindAddress", alias = "bind_address")]
@@ -386,7 +386,7 @@ impl std::hash::Hash for Peer {
     }
 }
 
-#[derive(Default, Deserialize)]
+#[derive(Default, Deserialize, PartialEq)]
 #[must_use]
 pub struct ManualPeeringConfigBuilder {
     pub peers: Option<Vec<PeerBuilder>>,
@@ -435,7 +435,7 @@ fn split_multiaddr(multiaddr: &str) -> Result<(Multiaddr, PeerId), Error> {
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, PartialEq)]
 #[must_use]
 pub struct PeerBuilder {
     #[serde(alias = "address")]

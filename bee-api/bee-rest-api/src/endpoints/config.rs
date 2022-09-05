@@ -1,10 +1,10 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, ToSocketAddrs};
+
 use multiaddr::{Multiaddr, Protocol};
 use serde::Deserialize;
-
-use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, ToSocketAddrs};
 
 pub(crate) const DEFAULT_BIND_ADDRESS: &str = "/ip4/0.0.0.0/tcp/14265";
 
@@ -70,7 +70,7 @@ pub(crate) const DEFAULT_FEATURE_PROOF_OF_WORK: bool = true;
 pub(crate) const DEFAULT_WHITE_FLAG_SOLIDIFICATION_TIMEOUT: u64 = 2;
 
 /// REST API configuration builder.
-#[derive(Default, Deserialize)]
+#[derive(Default, Deserialize, PartialEq)]
 #[must_use]
 pub struct RestApiConfigBuilder {
     #[serde(alias = "bindAddress")]
@@ -81,7 +81,7 @@ pub struct RestApiConfigBuilder {
     allowed_ips: Option<Vec<IpAddr>>,
     #[serde(alias = "featureProofOfWork")]
     feature_proof_of_work: Option<bool>,
-    #[serde(alias = "whiteFlagSolidifictionTimeout")]
+    #[serde(alias = "whiteFlagSolidificationTimeout")]
     white_flag_solidification_timeout: Option<u64>,
 }
 
