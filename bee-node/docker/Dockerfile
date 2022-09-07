@@ -3,7 +3,7 @@
 ############################
 FROM rust:1-buster as build
 
-ARG WITH_DASHBOARD=false
+ARG WITH_DASHBOARD=true
 
 LABEL org.label-schema.description="Bee node software to connect to the IOTA and Shimmer networks."
 LABEL org.label-schema.name="iotaledger/bee"
