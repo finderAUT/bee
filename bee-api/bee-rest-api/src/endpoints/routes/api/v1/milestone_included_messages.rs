@@ -49,7 +49,7 @@ pub(crate) async fn milestone_included_messages<B: StorageBackend>(
     milestone_index: MilestoneIndex,
     tangle: ResourceHandle<Tangle<B>>,
 ) -> Result<impl Reply, Rejection> {
-    match tangle.get_milestone_message(milestone_index).await {
+    match tangle.get_milestone_message(milestone_index) {
         Some(milestone_message) => {
             let mut included_messages = Vec::new();
             // get &[MessageId] from &Parent as it is needed like that to use iter().rev()
@@ -78,11 +78,7 @@ pub(crate) async fn rebuild_included_messages<B: StorageBackend>(
 ) -> Result<(), Error> {
     let mut visited = HashSet::new();
     while let Some(message_id) = message_ids.last() {
-        if let Some((message, meta)) = tangle
-            .get_vertex(message_id)
-            .await
-            .as_ref()
-            .and_then(|v| v.message_and_metadata().cloned())
+        if let Some((message, meta)) = tangle.get_message_and_metadata(message_id)
         {
             //TODO best way to compare Option with value?
             if meta.milestone_index() != Some(milestone_index) {

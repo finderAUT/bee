@@ -49,7 +49,7 @@ pub(crate) async fn milestone_proof<B: StorageBackend>(
     message_id: MessageId,
     tangle: ResourceHandle<Tangle<B>>,
 ) -> Result<impl Reply, Rejection> {
-    match tangle.get_milestone_message(milestone_index).await {
+    match tangle.get_milestone_message(milestone_index) {
         Some(milestone_message) => {
             let mut included_messages = Vec::new();
             // get &[MessageId] from &Parent as it is needed like that to use iter().rev()
