@@ -82,6 +82,22 @@ pub struct MessageResponse(pub MessageDto);
 
 impl BodyInner for MessageResponse {}
 
+//TODO include proof data, remove included messages
+/// Response of GET /api/v1/milestone/{milestone_index}/proof/{message_id}.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct MessageProofResponse {
+    #[serde(rename = "index")]
+    pub milestone_index: u32,
+    #[serde(rename = "includedMessages")]
+    pub msg: MessageDto,
+    #[serde(rename = "proofIndex")]
+    pub proof_index: u8,
+    #[serde(rename = "proofData")]
+    pub proof_data: String
+}
+
+impl BodyInner for MessageProofResponse {}
+
 /// Response of GET /api/v1/messages/{message_id}/metadata.
 /// Returns the metadata of a message.
 #[derive(Clone, Debug, Serialize, Deserialize)]
