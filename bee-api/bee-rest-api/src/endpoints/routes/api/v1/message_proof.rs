@@ -50,10 +50,10 @@ pub(crate) fn message_proof<B: StorageBackend>(
 ) -> Result<impl Reply, Rejection> {
     match tangle.get_message_and_metadata(&message_id) {
         Some((message, meta)) => {
-            let milestone_index = meta.milestone_index().expect("No milestone index in message meta data");
-            let milestone = tangle.get_milestone(milestone_index).expect("No milestone found");
+            let milestone_index = meta.milestone_index().expect("No milestone index in message meta data");;
+            let milestone_message = tangle.get_milestone_message(milestone_index).expect("No milestone found");
 
-            let milestone_payload = match milestone.payload() {
+            let milestone_payload = match milestone_message.payload() {
                 Some(Payload::Milestone(milestone)) => milestone,
                 _ => Err(reject::custom(CustomRejection::NotFound(
                     "can not find message".to_string(),
