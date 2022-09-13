@@ -3,6 +3,8 @@
 
 use std::net::IpAddr;
 use std::ops::Deref;
+use crypto::hashes::blake2b::Blake2b256;
+use digest::{Digest, Update};
 use rs_merkle::MerkleTree;
 use rs_merkle::utils::collections::to_hex_string;
 use bee_message::MessageId;
@@ -48,8 +50,8 @@ pub(crate) fn message_proof<B: StorageBackend>(
 ) -> Result<impl Reply, Rejection> {
     match tangle.get_message_and_metadata(&message_id) {
         Some((message, meta)) => {
-            let milestone_index = meta.milestone_index().unwrap();
-            let milestone = tangle.get_milestone(milestone_index).unwrap();
+            let milestone_index = meta.milestone_index().expect("No milestone index in message meta data");
+            let milestone = tangle.get_milestone(milestone_index).expect("No milestone found");
 
             let milestone_payload = match milestone.payload() {
                 Some(Payload::Milestone(milestone)) => milestone,
@@ -65,9 +67,11 @@ pub(crate) fn message_proof<B: StorageBackend>(
                 .await
                 .map_err(|e| reject::custom(CustomRejection::BadRequest(e.to_string())))?;
 
+            create_leaves_from_hex(included_messages);
             let merkle_tree = MerkleTree::<BlakeAlgo>::from_leaves(&leaves);
             let proof_index = included_messages.iter().position(|&x| x == message_id).unwrap();
             let indices_to_prove = vec![proof_index];
+            let merkle_proof = merkle_tree.proof(&indices_to_prove);
             let proof_bytes = merkle_proof.to_bytes(); //same as merkle_proof.serialize::<DirectHashesOrder>();
             let merkle_root = merkle_tree.root().expect("couldn't get the merkle root");
 
@@ -85,6 +89,7 @@ pub(crate) fn message_proof<B: StorageBackend>(
         ))),
     }
 }
+
 const LEAF_HASH_PREFIX: u8 = 0x00;
 const NODE_HASH_PREFIX: u8 = 0x01;
 
@@ -95,8 +100,6 @@ impl rs_merkle::Hasher for BlakeAlgo {
     type Hash = [u8; 32];
 
     fn hash(data: &[u8]) -> [u8; 32] {
-        type Blake2b256 = Blake2b<U32>;
-
         let mut hasher = Blake2b256::new();
 
         hasher.update(data);
@@ -108,7 +111,6 @@ impl rs_merkle::Hasher for BlakeAlgo {
 
         match right {
             Some(right_node) => {
-                type Blake2b256 = Blake2b<U32>;
                 let mut hasher = Blake2b256::new_with_prefix([NODE_HASH_PREFIX]);
                 hasher.update(left);
                 hasher.update(right_node);
@@ -123,7 +125,7 @@ impl rs_merkle::Hasher for BlakeAlgo {
     }
 }
 
-pub fn create_leaves_from_hex(input: Vec<&str>) -> Vec<[u8; 32]> {
+pub fn create_leaves_from_hex(input: Vec<MessageId>) -> Vec<[u8; 32]> {
     /*let leaf_values = vec!("52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649",
                            "81855ad8681d0d86d1e91e00167939cb6694d2c422acd208a0072939487f6999",
                            "eb9d18a44784045d87f3c67cf22746e995af5a25367951baa2ff6cd471c483f1",
@@ -134,9 +136,8 @@ pub fn create_leaves_from_hex(input: Vec<&str>) -> Vec<[u8; 32]> {
     );*/
     let x = input
         .iter()
-        .map(|hex_str| hex::decode(hex_str).expect("Decoding failed"))
+        .map(|message_id| message_id.as_ref())
         .map(|bytes| {
-            type Blake2b256 = Blake2b<U32>;
             let mut hasher = Blake2b256::new();
             hasher.update([LEAF_HASH_PREFIX]);
             hasher.update(bytes);
