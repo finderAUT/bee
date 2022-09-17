@@ -4,7 +4,8 @@
 use std::net::IpAddr;
 use std::ops::Deref;
 use crypto::hashes::blake2b::Blake2b256;
-use digest::{Digest, Update};
+use crypto::hashes::{{Digest}};
+use log::info;
 use rs_merkle::MerkleTree;
 use rs_merkle::utils::collections::to_hex_string;
 use bee_message::MessageId;
@@ -18,8 +19,9 @@ use crate::{
         config::ROUTE_MESSAGE, filters::with_tangle, path_params::message_id, permission::has_permission,
         rejection::CustomRejection, storage::StorageBackend,
     },
-    types::{body::SuccessBody, dtos::MessageDto, responses::MessageResponse},
+    types::{body::SuccessBody, dtos::MessageDto},
 };
+use crate::endpoints::config::ROUTE_MESSAGE_PROOF;
 use crate::endpoints::routes::api::v1::milestone_included_messages::rebuild_included_messages;
 use crate::types::responses::MessageProofResponse;
 
@@ -38,51 +40,52 @@ pub(crate) fn filter<B: StorageBackend>(
 ) -> BoxedFilter<(impl Reply,)> {
     self::path()
         .and(warp::get())
-        .and(has_permission(ROUTE_MESSAGE, public_routes, allowed_ips))
+        .and(has_permission(ROUTE_MESSAGE_PROOF, public_routes, allowed_ips))
         .and(with_tangle(tangle))
-        .and_then(|message_id, tangle| async move { message_proof(message_id, tangle) })
+        .and_then(message_proof)
         .boxed()
 }
 
-pub(crate) fn message_proof<B: StorageBackend>(
+pub(crate) async fn message_proof<B: StorageBackend>(
     message_id: MessageId,
     tangle: ResourceHandle<Tangle<B>>,
 ) -> Result<impl Reply, Rejection> {
+    info!("Called message proof");
     match tangle.get_message_and_metadata(&message_id) {
         Some((message, meta)) => {
-            let milestone_index = meta.milestone_index().expect("No milestone index in message meta data");;
+            let milestone_index = meta.milestone_index().expect("No milestone index in message meta data");
             let milestone_message = tangle.get_milestone_message(milestone_index).expect("No milestone found");
-
-            let milestone_payload = match milestone_message.payload() {
-                Some(Payload::Milestone(milestone)) => milestone,
-                _ => Err(reject::custom(CustomRejection::NotFound(
-                    "can not find message".to_string(),
-                )))
-            };
-            milestone_payload.essence().merkle_proof();
+            info!("Found milestone with index {}", *milestone_index);
+            let mut milestone_merkle_proof:&[u8] = &[];
+            if let Some(Payload::Milestone(milestone_payload)) = message.payload() {
+                milestone_merkle_proof = milestone_payload.essence().merkle_proof();
+                info!("Milestone merkle root {}", hex::encode(milestone_merkle_proof));
+            }
 
             let mut included_messages = Vec::new();
             let parents_message_ids = Deref::deref(milestone_message.parents());
             rebuild_included_messages(tangle, milestone_index, parents_message_ids.iter().rev().copied().collect(), &mut included_messages)
                 .await
                 .map_err(|e| reject::custom(CustomRejection::BadRequest(e.to_string())))?;
-
-            create_leaves_from_hex(included_messages);
+            info!("Included messages: {:#x?}", included_messages);
+            let leaves = create_leaves_from_hex(&included_messages);
+            info!("Leaves: {:#02x?}",leaves);
             let merkle_tree = MerkleTree::<BlakeAlgo>::from_leaves(&leaves);
             let proof_index = included_messages.iter().position(|&x| x == message_id).unwrap();
+            info!("Proof index {}", proof_index);
             let indices_to_prove = vec![proof_index];
             let merkle_proof = merkle_tree.proof(&indices_to_prove);
             let proof_bytes = merkle_proof.to_bytes(); //same as merkle_proof.serialize::<DirectHashesOrder>();
             let merkle_root = merkle_tree.root().expect("couldn't get the merkle root");
+            info!("Merkle root from proof {}", hex::encode(merkle_root));
+            assert!(merkle_root.eq(milestone_merkle_proof));
 
-            assert!(merkle_root.eq(milestone_payload.essence().merkle_proof()));
-
-            Ok(warp::reply::json(&SuccessBody::new(MessageProofResponse(
-                *milestone_index,
-                MessageDto::from(&message,),
+            Ok(warp::reply::json(&SuccessBody::new(MessageProofResponse {
+                milestone_index: *milestone_index,
+                msg: MessageDto::from(&message),
                 proof_index,
-                base64::encode(proof_bytes)
-            ))))
+                proof_data: base64::encode(proof_bytes)
+            })))
         },
         None => Err(reject::custom(CustomRejection::NotFound(
             "can not find message".to_string(),
@@ -101,8 +104,7 @@ impl rs_merkle::Hasher for BlakeAlgo {
 
     fn hash(data: &[u8]) -> [u8; 32] {
         let mut hasher = Blake2b256::new();
-
-        hasher.update(data);
+        digest::Update::update(&mut hasher, data);
         <Self::Hash>::from(hasher.finalize())
     }
 
@@ -111,7 +113,8 @@ impl rs_merkle::Hasher for BlakeAlgo {
 
         match right {
             Some(right_node) => {
-                let mut hasher = Blake2b256::new_with_prefix([NODE_HASH_PREFIX]);
+                let mut hasher = Blake2b256::new();
+                hasher.update([NODE_HASH_PREFIX]);
                 hasher.update(left);
                 hasher.update(right_node);
                 let hash = <Self::Hash>::from(hasher.finalize());
@@ -125,7 +128,7 @@ impl rs_merkle::Hasher for BlakeAlgo {
     }
 }
 
-pub fn create_leaves_from_hex(input: Vec<MessageId>) -> Vec<[u8; 32]> {
+pub fn create_leaves_from_hex(input: &Vec<MessageId>) -> Vec<[u8; 32]> {
     /*let leaf_values = vec!("52fdfc072182654f163f5f0f9a621d729566c74d10037c4d7bbb0407d1e2c649",
                            "81855ad8681d0d86d1e91e00167939cb6694d2c422acd208a0072939487f6999",
                            "eb9d18a44784045d87f3c67cf22746e995af5a25367951baa2ff6cd471c483f1",

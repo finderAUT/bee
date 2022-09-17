@@ -91,7 +91,7 @@ pub struct MessageProofResponse {
     #[serde(rename = "includedMessages")]
     pub msg: MessageDto,
     #[serde(rename = "proofIndex")]
-    pub proof_index: u8,
+    pub proof_index: usize,
     #[serde(rename = "proofData")]
     pub proof_data: String
 }
