@@ -15,6 +15,7 @@ pub(crate) const ROUTE_BALANCE_ED25519: &str = "/api/v1/addresses/ed25519/:addre
 pub(crate) const ROUTE_HEALTH: &str = "/health";
 pub(crate) const ROUTE_INFO: &str = "/api/v1/info";
 pub(crate) const ROUTE_MESSAGE: &str = "/api/v1/messages/:messageId";
+pub(crate) const ROUTE_MESSAGE_PROOF: &str = "/api/v1/messages/:messageId/proof";
 pub(crate) const ROUTE_MESSAGE_CHILDREN: &str = "/api/v1/messages/:messageId/children";
 pub(crate) const ROUTE_MESSAGE_METADATA: &str = "/api/v1/messages/:messageId/metadata";
 pub(crate) const ROUTE_MESSAGE_RAW: &str = "/api/v1/messages/:messageId/raw";
@@ -38,12 +39,13 @@ pub(crate) const ROUTE_TRANSACTION_INCLUDED_MESSAGE: &str = "/api/v1/transaction
 pub(crate) const ROUTE_WHITE_FLAG: &str = "/api/plugins/debug/whiteflag";
 
 /// the routes that are available for public use
-pub(crate) const DEFAULT_PUBLIC_ROUTES: [&str; 22] = [
+pub(crate) const DEFAULT_PUBLIC_ROUTES: [&str; 23] = [
     ROUTE_BALANCE_BECH32,
     ROUTE_BALANCE_ED25519,
     ROUTE_HEALTH,
     ROUTE_INFO,
     ROUTE_MESSAGE,
+    ROUTE_MESSAGE_PROOF,
     ROUTE_MESSAGE_CHILDREN,
     ROUTE_MESSAGE_METADATA,
     ROUTE_MESSAGE_RAW,

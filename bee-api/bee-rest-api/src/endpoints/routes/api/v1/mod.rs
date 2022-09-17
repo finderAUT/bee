@@ -92,6 +92,11 @@ pub(crate) fn filter<B: StorageBackend>(
         allowed_ips.clone(),
         tangle.clone(),
     ))
+    .or(message_proof::filter(
+        public_routes.clone(),
+        allowed_ips.clone(),
+        tangle.clone(),
+    ))
     .or(message_children::filter(
         public_routes.clone(),
         allowed_ips.clone(),
