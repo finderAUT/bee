@@ -57,7 +57,7 @@ pub(crate) async fn message_proof<B: StorageBackend>(
             let milestone_message = tangle.get_milestone_message(milestone_index).expect("No milestone found");
             info!("Found milestone with index {}", *milestone_index);
             let mut milestone_merkle_proof:&[u8] = &[];
-            if let Some(Payload::Milestone(milestone_payload)) = message.payload() {
+            if let Some(Payload::Milestone(milestone_payload)) = milestone_message.payload() {
                 milestone_merkle_proof = milestone_payload.essence().merkle_proof();
                 info!("Milestone merkle root {}", hex::encode(milestone_merkle_proof));
             }
@@ -78,7 +78,7 @@ pub(crate) async fn message_proof<B: StorageBackend>(
             let proof_bytes = merkle_proof.to_bytes(); //same as merkle_proof.serialize::<DirectHashesOrder>();
             let merkle_root = merkle_tree.root().expect("couldn't get the merkle root");
             info!("Merkle root from proof {}", hex::encode(merkle_root));
-            assert!(merkle_root.eq(milestone_merkle_proof));
+            assert_eq!(merkle_root, milestone_merkle_proof);
 
             Ok(warp::reply::json(&SuccessBody::new(MessageProofResponse {
                 milestone_index: *milestone_index,
