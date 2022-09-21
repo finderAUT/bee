@@ -82,7 +82,7 @@ pub(crate) async fn message_proof<B: StorageBackend>(
 
             Ok(warp::reply::json(&SuccessBody::new(MessageProofResponse {
                 milestone_index: *milestone_index,
-                msg: MessageDto::from(&message),
+                message: MessageDto::from(&message),
                 proof_index,
                 proof_data: base64::encode(proof_bytes)
             })))

@@ -88,8 +88,8 @@ impl BodyInner for MessageResponse {}
 pub struct MessageProofResponse {
     #[serde(rename = "index")]
     pub milestone_index: u32,
-    #[serde(rename = "includedMessages")]
-    pub msg: MessageDto,
+    #[serde(rename = "message")]
+    pub message: MessageDto,
     #[serde(rename = "proofIndex")]
     pub proof_index: usize,
     #[serde(rename = "proofData")]
