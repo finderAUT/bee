@@ -16,14 +16,20 @@ use bee_message::payload::Payload;
 
 use crate::{
     endpoints::{
-        config::ROUTE_MESSAGE, filters::with_tangle, path_params::message_id, permission::has_permission,
-        rejection::CustomRejection, storage::StorageBackend,
+        routes::api::v1::milestone_included_messages::rebuild_included_messages,
+        config::ROUTE_MESSAGE_PROOF,
+        filters::with_tangle,
+        path_params::message_id,
+        permission::has_permission,
+        rejection::CustomRejection,
+        storage::StorageBackend
     },
-    types::{body::SuccessBody, dtos::MessageDto},
+    types::{
+        body::SuccessBody,
+        dtos::MessageDto,
+        responses::MessageProofResponse
+    }
 };
-use crate::endpoints::config::ROUTE_MESSAGE_PROOF;
-use crate::endpoints::routes::api::v1::milestone_included_messages::rebuild_included_messages;
-use crate::types::responses::MessageProofResponse;
 
 fn path() -> impl Filter<Extract = (MessageId,), Error = Rejection> + Clone {
     super::path()

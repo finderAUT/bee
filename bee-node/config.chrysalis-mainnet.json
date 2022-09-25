@@ -102,6 +102,7 @@
       "/api/v1/tips",
       "/api/v1/messages",
       "/api/v1/messages/:messageId",
+      "/api/v1/messages/:messageId/proof",
       "/api/v1/messages/:messageId/metadata",
       "/api/v1/messages/:messageId/raw",
       "/api/v1/messages/:messageId/children",

@@ -83,7 +83,7 @@ pub struct MessageResponse(pub MessageDto);
 impl BodyInner for MessageResponse {}
 
 //TODO include proof data, remove included messages
-/// Response of GET /api/v1/milestone/{milestone_index}/proof/{message_id}.
+/// Response of GET /api/v1/message/{message_id}/proof/.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MessageProofResponse {
     #[serde(rename = "index")]

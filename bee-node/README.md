@@ -89,5 +89,8 @@ podman run \
   -d \
  bee:milestone-msg-proof
 ```
+###ATTENTION
+per default the config `bee/bee-node/config.chrysalis-mainnet.json` is used for the docker image
+and not config.json mounted into the container
 
 https://www.tutorialworks.com/podman-rootless-volumes/
