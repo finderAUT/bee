@@ -10,7 +10,7 @@ use rs_merkle::MerkleTree;
 use rs_merkle::utils::collections::to_hex_string;
 use bee_message::MessageId;
 use bee_runtime::resource::ResourceHandle;
-use bee_tangle::Tangle;
+use bee_tangle::{ConflictReason, Tangle};
 use warp::{filters::BoxedFilter, reject, Filter, Rejection, Reply};
 use bee_message::payload::Payload;
 
@@ -60,6 +60,12 @@ pub(crate) async fn message_proof<B: StorageBackend>(
     match tangle.get_message_and_metadata(&message_id) {
         Some((message, meta)) => {
             let milestone_index = meta.milestone_index().expect("No milestone index in message meta data");
+
+            //Check if passed message has a conflict and therefore is not included in milestone
+            if meta.conflict()!=ConflictReason.None {
+                reject::custom(CustomRejection::BadRequest("Message has conflict.".into()));
+            }
+
             let milestone_message = tangle.get_milestone_message(milestone_index).expect("No milestone found");
             info!("Found milestone with index {}", *milestone_index);
             let mut milestone_merkle_proof:&[u8] = &[];
