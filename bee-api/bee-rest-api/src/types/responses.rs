@@ -86,7 +86,7 @@ impl BodyInner for MessageResponse {}
 /// Response of GET /api/v1/message/{message_id}/proof/.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MessageProofResponse {
-    #[serde(rename = "index")]
+    #[serde(rename = "milestoneIndex")]
     pub milestone_index: u32,
     #[serde(rename = "message")]
     pub message: MessageDto,
