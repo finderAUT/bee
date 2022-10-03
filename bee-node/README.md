@@ -78,19 +78,51 @@ cp config.template.json config.json
 
 We also provide a `Dockerfile` that allows you to quickly deploy a Bee node. Please refer to the [Docker](../documentation/docs/getting_started/docker.md) section of the Bee documentation for more information.
 
+
+###ATTENTION
+per default the config `bee/bee-node/config.chrysalis-mainnet.json` is used for the docker image
+and not config.json mounted into the container.
+Can be changed by adding `--config config.json` at end of command.
+
 ```
 podman run \
-  -v $(pwd)/config.json:/config.json:Z \
-  -v $(pwd)/storage:/storage:Z \
-  -v $(pwd)/snapshots:/snapshots:Z \
-  --name bee\
+  -v $(pwd)/config.json:/app/config.json:Z \
+  -v $(pwd)/storage:/app/storage:Z \
+  -v $(pwd)/snapshots:/app/snapshots:Z \
+  --name bee2\
   --net=host \
   --ulimit nofile=8192:8192 \
   -d \
- bee:milestone-msg-proof
+ bee:milestone-msg-proof-prod2 \
+ --config config.json
 ```
-###ATTENTION
-per default the config `bee/bee-node/config.chrysalis-mainnet.json` is used for the docker image
-and not config.json mounted into the container
+
+UIDs of the base image `gcr.io/distroless/cc-debian11:nonroot`:
+```
+# cat /etc/passwd
+root:x:0:0:root:/root:/sbin/nologin
+nobody:x:65534:65534:nobody:/nonexistent:/sbin/nologin
+nonroot:x:65532:65532:nonroot:/home/nonroot:/sbin/nologin
+```
+As can be seen in the bee-node Dockerfile the user `nonroot` is used.
+Therefore, for it to have access to the mounts (storage, snapshots) 
+we have to make sure the respective user id owns them from the podman user space point of view:
+Per default everything will be owned by root.
+```
+$ podman unshare ls -la
+
+drwxrwxr-x. 1 root root    836  3. Okt 20:02 .
+drwx------. 1 root root   1168  3. Okt 19:45 ..
+-rw-r--r--. 1 root root   3454  5. Sep 17:11 config-devnet.json
+-rw-r--r--. 1 root root   5099  3. Okt 20:02 config.json
+drwxr-xr-x. 1 root root     26  5. Sep 17:11 snapshots
+drwxr-xr-x. 1 root root      0 25. Sep 17:43 storage
+```
+
+To change that execute 
+```
+$ podman unshare chown 65532:65532 -R storage
+$ podman unshare chown 65532:65532 -R snapshots
+```
 
 https://www.tutorialworks.com/podman-rootless-volumes/

@@ -62,7 +62,7 @@ pub(crate) async fn message_proof<B: StorageBackend>(
             let milestone_index = meta.milestone_index().expect("No milestone index in message meta data");
 
             //Check if passed message has a conflict and therefore is not included in milestone
-            if meta.conflict()!=ConflictReason.None {
+            if meta.conflict()!=ConflictReason::None {
                 reject::custom(CustomRejection::BadRequest("Message has conflict.".into()));
             }
 
